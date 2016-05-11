@@ -149,9 +149,7 @@
 							<autoversionSubmodules>true</autoversionSubmodules>
 							<useReleaseProfile>false</useReleaseProfile>
 							<releaseProfile>release</releaseProfile>
-							<goals>
-								<goal>deploy</goal>
-							</goals>
+							<goals>deploy</goals>
 						</configuration>
 					</plugin>
 				</plugins>
