@@ -21,7 +21,7 @@
 
 	<groupId>com.ko-sys.av</groupId>
 	<artifactId>airac</artifactId>
-	<version>0.10.2-SNAPSHOT</version>
+	<version>0.10.2</version>
 	<packaging>jar</packaging>
 
 	<name>AIRAC-Java</name>
@@ -72,7 +72,7 @@
 		<connection>scm:git:git@github.com:wjkohnen/airac-java.git</connection>
 		<developerConnection>scm:git:git@github.com:wjkohnen/airac-java.git</developerConnection>
 		<url>git@github.com:wjkohnen/airac-java.git</url>
-	  <tag>HEAD</tag>
+	  <tag>airac-0.10.2</tag>
   </scm>
 
 	<distributionManagement>
