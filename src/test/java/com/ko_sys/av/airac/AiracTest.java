@@ -86,6 +86,7 @@ public class AiracTest {
 	public void testEqualHashCode() {
 		Airac left = Airac.fromIdentifier("1605");
 		Airac right = Airac.fromInstant(Instant.from(ZonedDateTime.of(2016, 5, 4, 8, 20, 0, 0, ZoneOffset.UTC)));
+		Airac next = left.getNext();
 
 		assertEquals(left, right);
 		assertEquals(left.hashCode(), right.hashCode());
@@ -97,6 +98,11 @@ public class AiracTest {
 		assertTrue(left.equals(right));
 		assertTrue(right.equals(right));
 		assertTrue(right.equals(left));
+		assertTrue(next.equals(next));
+		assertFalse(left.equals(next));
+		assertFalse(right.equals(next));
+		assertFalse(next.equals(right));
+		assertFalse(next.equals(left));
 		assertFalse(left.equals(null));
 		assertFalse(right.equals(new Object()));
 	}
