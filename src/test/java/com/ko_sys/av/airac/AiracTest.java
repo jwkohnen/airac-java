@@ -27,8 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AiracTest {
 	@Test
@@ -93,6 +92,13 @@ public class AiracTest {
 
 		assertEquals(left.getNext(), right.getNext());
 		assertEquals(left.getNext().hashCode(), right.getNext().hashCode());
+
+		assertTrue(left.equals(left));
+		assertTrue(left.equals(right));
+		assertTrue(right.equals(right));
+		assertTrue(right.equals(left));
+		assertFalse(left.equals(null));
+		assertFalse(right.equals(new Object()));
 	}
 
 	@Test
