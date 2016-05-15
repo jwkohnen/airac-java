@@ -1,18 +1,17 @@
 /*
- *  Copyright (C) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
+ * Copyright (c) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
  *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.ko_sys.av.airac;
 
@@ -36,13 +35,13 @@ import static org.junit.Assert.assertEquals;
 public class AiracFromInstantTest {
 
 	private final String date;
-	private final int year;
-	private final int ordinal;
+	private final int expectYear;
+	private final int expectOrdinal;
 
-	public AiracFromInstantTest(String date, int year, int ordinal) {
+	public AiracFromInstantTest(String date, int expectYear, int expectOrdinal) {
 		this.date = date;
-		this.year = year;
-		this.ordinal = ordinal;
+		this.expectYear = expectYear;
+		this.expectOrdinal = expectOrdinal;
 	}
 
 	@NotNull
@@ -50,7 +49,7 @@ public class AiracFromInstantTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][]{
 				/*
-                        ICAO DOC 8126, 6th edition (2003); Paragraph 2.6.2 b):
+						ICAO DOC 8126, 6th edition (2003); Paragraph 2.6.2 b):
                                 the AIRAC effective dates must be in accordance
                                 with the predetermined, internationally agreed
                                 schedule of effective dates based on an interval of
@@ -59,7 +58,7 @@ public class AiracFromInstantTest {
 				{"1998-01-29", 1998, 2},
 
                 /*
-                        ICAO DOC 8126, 6th edition (2003); table 2-1 "Schedule of AIRAC effective date 2003-2012"
+						ICAO DOC 8126, 6th edition (2003); table 2-1 "Schedule of AIRAC effective date 2003-2012"
                 */
 				// first airac of the year and its predecessor
 				{"2003-01-23", 2003, 1},
@@ -92,9 +91,9 @@ public class AiracFromInstantTest {
 				{"2012-01-12", 2012, 1},
 
                 /*
-                        http://www.eurocontrol.int/articles/airac-adherence-monitoring-phase-1-p-03
+						http://www.eurocontrol.int/articles/airac-adherence-monitoring-phase-1-p-03
                 */
-				// first airac of the year and its predecessor (2013 2020)
+				// first airac of the expectYear and its predecessor (2013 2020)
 				{"2013-01-09", 2012, 13},
 				{"2013-01-10", 2013, 1},
 
@@ -129,7 +128,9 @@ public class AiracFromInstantTest {
 				{"2003-01-22", 2002, 13},
 				{"1964-01-16", 1964, 1},
 				{"1901-01-10", 1901, 1},
-				{"1998-12-31", 1998, 14}
+				{"1998-12-31", 1998, 14},
+
+				{"1963-12-31", 1963, 13}
 		});
 	}
 
@@ -143,14 +144,15 @@ public class AiracFromInstantTest {
 
 	@Test
 	public void fromInstantTest() {
-		String msg = String.format("test of {\"%s\", %d, %d}", date, year, ordinal);
+		String msg = String.format("test of {\"%s\", %d, %d}", date, expectYear, expectOrdinal);
 		System.out.println(msg);
 
 		Instant instant = instantFromIsoDate(date);
-		Airac got = Airac.fromInstant(instant);
+		Airac actual = Airac.fromInstant(instant);
 
-		assertEquals(msg, got.year(), year);
-		assertEquals(msg, got.ordinal(), ordinal);
+		assertEquals(msg, expectYear, actual.getYear());
+		assertEquals(msg, expectOrdinal, actual.getOrdinal());
 	}
+
 
 }

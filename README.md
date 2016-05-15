@@ -1,7 +1,8 @@
 # airac-java: a small Java library for calculating aviation AIRAC cycle dates
 
-[![GNU Lesser Public License v3](https://www.gnu.org/graphics/lgplv3-88x31.png)](https://www.gnu.org/licenses/lgpl-3.0.html)
+[![Apache License v2.0](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 [![Build Status](https://travis-ci.org/wjkohnen/airac-java.svg?branch=master)](https://travis-ci.org/wjkohnen/airac-java)
+[![Code Coverage](https://codecov.io/gh/wjkohnen/airac-java/branch/master/graph/badge.svg)](https://codecov.io/gh/wjkohnen/airac-java)
 
 Package airac-java provides calculations on Aeronautical Information Regulation And
 Control (AIRAC) cycles, i.e. cycle identifiers and effective calendar dates.
@@ -11,7 +12,8 @@ International Civil Aviation Organization (ICAO) are published and become
 effective at fixed dates. This package implements the AIRAC cycle definition as
 published in the ICAO Aeronautical Information Services Manual (DOC 8126;
 AN/872; 6th Edition; 2003). Test cases validate documented dates from 1998 until
-2020, including the rare case of a 14th cycle in the year 2020.
+2020, including the rare cases of a 14th cycle, e. g. in the years 1976, 1998, 2020
+and 2043.
 
 ## Example
 
@@ -26,12 +28,21 @@ System.out.println(output);
 // At 2012-08-26 the current AIRAC cycle was 1209 (effective: 2012-08-23; expires: 2012-09-19).
 ```
 
+## Maven Central
+```
+<dependency>
+    <groupId>com.ko-sys.av</groupId>
+    <artifactId>airac</artifactId>
+    <version> <!-- semantic version --> </version>
+</dependency>
+```
+
 ## See also
 This is a port of my [go library](https://github.com/wjkohnen/airac/). I did this
 port basically in order to learn how to use JSR-310 and parametrized JUnit tests.
 
 ## License
-Licensed under "business friendly" GNU Lesser General Public License version 3.0.
+Licensed under the Apache License, Version 2.0.
 
 ## Wikipedia
 

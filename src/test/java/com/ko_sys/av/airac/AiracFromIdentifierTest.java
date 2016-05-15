@@ -1,18 +1,17 @@
 /*
- *  Copyright (C) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
+ * Copyright (c) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
  *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.ko_sys.av.airac;
@@ -31,17 +30,17 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class AiracFromIdentifierTest {
 	private final String id;
-	private final String effective;
-	private final int year;
-	private final int ordinal;
-	private final boolean ok;
+	private final String expectEffective;
+	private final int expectYear;
+	private final int expectOrdinal;
+	private final boolean shallNotFail;
 
-	public AiracFromIdentifierTest(String id, String effective, int year, int ordinal, boolean ok) {
+	public AiracFromIdentifierTest(String id, String expectEffective, int expectYear, int expectOrdinal, boolean shallNotFail) {
 		this.id = id;
-		this.effective = effective;
-		this.year = year;
-		this.ordinal = ordinal;
-		this.ok = ok;
+		this.expectEffective = expectEffective;
+		this.expectYear = expectYear;
+		this.expectOrdinal = expectOrdinal;
+		this.shallNotFail = shallNotFail;
 	}
 
 	@NotNull
@@ -56,39 +55,47 @@ public class AiracFromIdentifierTest {
 				{"6401", "1964-01-16", 1964, 1, true},
 				{"6301", "2063-01-04", 2063, 1, true},
 				{"6313", "2063-12-06", 2063, 13, true},
-				{"9913", "1999-12-30", 1999, 13, true}
+				{"9913", "1999-12-30", 1999, 13, true},
+				{"101", "", 0, 0, false},
+				{"160a", "", 0, 0, false},
+				{"1a01", "", 0, 0, false},
+				{"1016", "", 0, 0, false},
+				{"10-1", "", 0, 0, false},
+				{"-101", "", 0, 0, false},
+				{"", "", 0, 0, false},
+				{"nope", "", 0, 0, false}
 		});
 	}
 
 	@Test
 	public void TestFromIdentifier() {
-		String msg = String.format("test of {\"%s\", \"%s\", %d, %d, %b}", id, effective, year, ordinal, ok);
+		String msg = String.format("test of {\"%s\", \"%s\", %d, %d, %b}", id, expectEffective, expectYear, expectOrdinal, shallNotFail);
 		System.out.println(msg);
 
-		IllegalArgumentException gotException;
-		Airac got;
+		IllegalArgumentException actualException;
+		Airac actual;
 
-		Instant wantEffective = null;
-		if (!effective.isEmpty()) {
-			wantEffective = AiracFromInstantTest.instantFromIsoDate(effective);
+		Instant expectEffectiveInstant = null;
+		if (!expectEffective.isEmpty()) {
+			expectEffectiveInstant = AiracFromInstantTest.instantFromIsoDate(expectEffective);
 		}
 
 		try {
-			got = Airac.fromIdentifier(id);
-			gotException = null;
+			actual = Airac.fromIdentifier(id);
+			actualException = null;
 		} catch (IllegalArgumentException ex) {
-			got = null;
-			gotException = ex;
+			actual = null;
+			actualException = ex;
 		}
 
-		if (ok) {
-			assertNull(msg, gotException);
-			assertNotNull(msg, got);
-			assertEquals(msg, wantEffective, got.effective());
-			assertEquals(msg, year, got.year());
-			assertEquals(msg, ordinal, got.ordinal());
+		if (shallNotFail) {
+			assertNull(msg, actualException);
+			assertNotNull(msg, actual);
+			assertEquals(msg, expectYear, actual.getYear());
+			assertEquals(msg, expectOrdinal, actual.getOrdinal());
+			assertEquals(msg, expectEffectiveInstant, actual.getEffective());
 		} else {
-			assertNotNull(msg, gotException);
+			assertNotNull(msg, actualException);
 		}
 	}
 }

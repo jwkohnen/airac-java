@@ -1,18 +1,17 @@
 /*
- *  Copyright (C) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
+ * Copyright (c) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
  *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.ko_sys.av.airac;
@@ -25,40 +24,43 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class AiracTest {
 	@Test
-	public void testOverflow() {
-
-		Airac first = Airac.fromInstant(Instant.from(ZonedDateTime.of(1800, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)));
-		Airac epoch = Airac.fromInstant(Airac.epoch);
+	public void testUnderflow() {
+		Airac first = Airac.fromInstant(Airac.epoch).getNext();
+		Airac doc8126 = Airac.fromInstant(Instant.from(ZonedDateTime.of(1998, 1, 29, 0, 0, 0, 0, ZoneOffset.UTC)));
 		Airac last = Airac.fromInstant(Instant.from(ZonedDateTime.of(2200, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)));
 
-		boolean visitedEpochCycle = false;
-		int count = 0;
-		for (Airac airac = first;
-			 airac.effective().isBefore(last.effective());
-			 airac = airac.next()) {
-			count++;
-			Airac previous = airac.previous();
-			Duration between = Duration.between(previous.effective(), airac.effective());
+		boolean visitedDoc8126Cycle = false;
 
-			assertEquals(String.format("Duration between two cycles' effective dates must be 28 days " +
-					"( %s <- %s )", previous, airac), Airac.durationCycle, between);
+		for (Airac airac = first; airac.compareTo(last) <= 0; airac = airac.getNext()) {
+			Airac previous = airac.getPrevious();
 
-			if (airac.effective().equals(Airac.epoch)) {
-				assertEquals(epoch, airac);
-				visitedEpochCycle = true;
+			Duration between = Duration.between(previous.getEffective(), airac.getEffective());
+			assertEquals(Airac.durationCycle, between);
+
+			if (airac.getEffective().equals(doc8126.getEffective())) {
+				assertEquals(doc8126, airac);
+				visitedDoc8126Cycle = true;
 			}
 
-			Airac airacFromInstant = Airac.fromInstant(airac.effective());
+			Airac airacFromInstant = Airac.fromInstant(airac.getEffective());
 			assertEquals(airac, airacFromInstant);
+
+			Airac underflow = Airac.fromInstant(airac.getEffective().minusNanos(1));
+			assertEquals(previous, underflow);
+			if (airac.getOrdinal() == 1) {
+				assertEquals(airac.getYear() - 1, underflow.getYear());
+				assertTrue(underflow.getOrdinal() == 13 || underflow.getOrdinal() == 14);
+			}
 		}
-		assertTrue("we have to pass by the epoch's cycle", visitedEpochCycle);
-		System.out.println(count + "; " + first.toLongString() + "; " + last.toLongString());
+		assertTrue("we have to pass by the DOC 8126's cycle", visitedDoc8126Cycle);
 	}
 
 	@Test
@@ -89,7 +91,32 @@ public class AiracTest {
 		assertEquals(left, right);
 		assertEquals(left.hashCode(), right.hashCode());
 
-		assertEquals(left.next(), right.next());
-		assertEquals(left.next().hashCode(), right.next().hashCode());
+		assertEquals(left.getNext(), right.getNext());
+		assertEquals(left.getNext().hashCode(), right.getNext().hashCode());
+	}
+
+	@Test
+	public void lastAiracOfYearTest() {
+		for (int year = 1901; year < 2200; year++) {
+			Airac airac = Airac.fromInstant(Instant.from(ZonedDateTime.of(year + 1, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC))
+					.minusNanos(1));
+			assertEquals("should be the same year", year, airac.getYear());
+		}
+	}
+
+	@Test
+	public void testIdentifiers() {
+		List<Integer> fourteens = Arrays.asList(1976, 1998, 2020, 2043);
+		for (int year = 1964; year < 2064; year++) {
+			int cycles = 14;
+			if (!fourteens.contains(year)) {
+				cycles = 13;
+			}
+			for (int ordinal = 1; ordinal <= cycles; ordinal++) {
+				Airac airac = Airac.fromIdentifier(String.format("%02d%02d", year % 100, ordinal));
+				assertEquals(year, airac.getYear());
+				assertEquals(ordinal, airac.getOrdinal());
+			}
+		}
 	}
 }
