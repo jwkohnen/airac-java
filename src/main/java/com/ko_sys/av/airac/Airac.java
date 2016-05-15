@@ -1,18 +1,17 @@
 /*
- *  Copyright (C) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
+ * Copyright (c) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
  *
- *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU Lesser General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.ko_sys.av.airac;
 
@@ -28,6 +27,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * An AIRAC cycle.
@@ -40,10 +41,11 @@ import java.util.Objects;
  * Regular, planned Aeronautical Information Publications (AIP) as defined by the International Civil Aviation
  * Organization (ICAO) are published and become effective at fixed dates. This class implements the AIRAC cycle
  * definition as published in the ICAO Aeronautical Information Services Manual (DOC 8126; AN/872; 6th Edition; 2003).
- * Test cases validate documented dates from 1998 until 2020, including the rare case of a 14th cycle in the year 2020.
+ * Test cases validate officially documented dates from 1998 until 2020, including the rare case of a 14th cycle in the
+ * year 2020.
  * <p>
  * This class assumes that AIRAC cycles are effective from the effective date at 00:00:00 UTC until 27 days later at
- * 23:59:59 UTC. That is not correct:
+ * 23:59:59 UTC. However that is not correct:
  * <p>
  * ICAO DOC 8126, 6th Edition (2003), paragraph 2.6.4:
  * <p>
@@ -55,8 +57,9 @@ import java.util.Objects;
  * <p>
  * However this is a "wontfix", because that may just confuse users.
  * <p>
- * Contrary to the original Golang implementation this class does not appear to have significant lower or upper time
- * boundaries. At least values corresponding to years between 1800 up to 2200 are plausible.
+ * This implementation will silently produce bogus data before the internal epoch of 1901-01-10. Contrary to the
+ * original Golang implementation this class does not appear to have a significant upper time boundary. At least
+ * values corresponding to dates between 1901-01-10 up to year 2200 are plausible.
  * <p>
  * This class only provides calculations on effective dates, not publication or reception dates etc. Although effective
  * dates are clearly defined and are consistent at least between 1998 until 2020, the derivative dates changed
@@ -66,7 +69,6 @@ import java.util.Objects;
  */
 @Immutable
 public class Airac implements Comparable<Airac>, Serializable {
-
 	/**
 	 * ICAO DOC 8126, 6th edition (2003); Paragraph 2.6.2 b):
 	 * the AIRAC effective dates must be in accordance
@@ -75,25 +77,24 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 * 28 days, including 29 January 1998
 	 */
 	static final Duration durationCycle = Duration.ofDays(28);
-
 	/**
 	 * All calculations use the UTC time zone.
 	 */
 	private static final ZoneOffset UTC = ZoneOffset.UTC;
-
 	/**
-	 * ICAO DOC 8126, 6th edition (2003); Paragraph 2.6.2 b):
-	 * the AIRAC effective dates must be in accordance
-	 * with the predetermined, internationally agreed
-	 * schedule of effective dates based on an interval of
-	 * 28 days, including 29 January 1998
+	 * Magic effective date of a fictive AIRAC cycle that aligns with the documented cycles, e.g. 1998-01-29.
 	 */
-	static final Instant epoch = Instant.from(ZonedDateTime.of(1998, 1, 29, 0, 0, 0, 0, UTC));
+	static final Instant epoch = Instant.from(ZonedDateTime.of(1901, 1, 10, 0, 0, 0, 0, UTC));
 
 	/**
 	 * Serialization version.
 	 */
-	private static final long serialVersionUID = 19980129L;
+	private static final long serialVersionUID = 19010110L;
+
+	/**
+	 * Pattern of AIRAC cycle identifiers (yyoo).
+	 */
+	private static final Pattern identifierPattern = Pattern.compile("^(\\d{2})(\\d{2})$");
 
 	/**
 	 * Internal serial of this cycle, relative to {@code epoch}.
@@ -111,6 +112,8 @@ public class Airac implements Comparable<Airac>, Serializable {
 
 	/**
 	 * Obtains an instance of {@code Airac} that occurred at {@link Instant}.
+	 * <p>
+	 * Will silently produce bogus data, when instant is before the internal epoch of 1901-01-10.
 	 *
 	 * @param instant the point in time at which the AIRAC cycle of interest was current, not null
 	 * @return an instance of {@code Airac} that occurred at {@link Instant}
@@ -139,32 +142,26 @@ public class Airac implements Comparable<Airac>, Serializable {
 	@NotNull
 	@Contract("null -> fail")
 	public static Airac fromIdentifier(@Nullable String yyoo) {
-		if (yyoo == null || yyoo.length() != 4) {
+		Objects.requireNonNull(yyoo);
+
+		Matcher m = identifierPattern.matcher(yyoo);
+		if (!m.find()) {
 			throw new IllegalArgumentException("illegal AIRAC identifier: " + yyoo);
 		}
 
 		final int year;
-		final int ordinal;
-		try {
-			final int yy = Integer.parseInt(yyoo.substring(0, 2));
-			if (yy < 64) {
-				year = 2000 + yy;
-			} else {
-				year = 1900 + yy;
-			}
-
-			ordinal = Integer.parseInt(yyoo.substring(2, 4));
-		} catch (NumberFormatException nfe) {
-			throw new IllegalArgumentException(String.format("illegal AIRAC identifier: %s", yyoo));
+		final int yy = Integer.parseInt(m.group(1));
+		if (yy > 63) {
+			year = 1900 + yy;
+		} else {
+			year = 2000 + yy;
 		}
+		final int ordinal = Integer.parseInt(m.group(2));
 
-		Airac firstOfYear = fromInstant(Instant.from(ZonedDateTime.of(year, 1, 1, 0, 0, 0, 0, UTC)));
-		if (firstOfYear.year() < year) {
-			firstOfYear = firstOfYear.next();
-		}
-		Airac airac = new Airac(firstOfYear.serial + ordinal - 1);
+		Airac lastAiracOfPreviousYear = fromInstant(Instant.from(ZonedDateTime.of(year - 1, 12, 31, 0, 0, 0, 0, UTC)));
+		Airac airac = new Airac(lastAiracOfPreviousYear.serial + ordinal);
 
-		if (airac.year() != year) {
+		if (airac.getYear() != year) {
 			throw new IllegalArgumentException(String.format("year %d does not have %d cycles", year, ordinal));
 		}
 
@@ -177,7 +174,7 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 * @return the effective date (instant) of this AIRAC cycle
 	 */
 	@NotNull
-	public Instant effective() {
+	public Instant getEffective() {
 		return epoch.plus(durationCycle.multipliedBy(serial));
 	}
 
@@ -186,8 +183,8 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 *
 	 * @return the ordinal for this AIRAC cycle's identifier
 	 */
-	public int ordinal() {
-		return (effective().atZone(UTC).getDayOfYear() - 1) / 28 + 1;
+	public int getOrdinal() {
+		return (getEffective().atZone(UTC).getDayOfYear() - 1) / 28 + 1;
 	}
 
 	/**
@@ -195,8 +192,8 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 *
 	 * @return the year for this AIRAC cycle's identifier
 	 */
-	public int year() {
-		return effective().atZone(UTC).getYear();
+	public int getYear() {
+		return getEffective().atZone(UTC).getYear();
 	}
 
 	/**
@@ -207,7 +204,7 @@ public class Airac implements Comparable<Airac>, Serializable {
 	@NotNull
 	@Override
 	public String toString() {
-		return String.format("%02d%02d", year() % 100, ordinal());
+		return String.format("%02d%02d", getYear() % 100, getOrdinal());
 	}
 
 	/**
@@ -219,10 +216,10 @@ public class Airac implements Comparable<Airac>, Serializable {
 	@NotNull
 	public String toLongString() {
 		return String.format("%02d%02d (effective: %s; expires: %s)",
-				year() % 100,
-				ordinal(),
-				effective().atZone(UTC).format(DateTimeFormatter.ISO_LOCAL_DATE),
-				next().effective().minusSeconds(1).atZone(UTC).format(DateTimeFormatter.ISO_LOCAL_DATE)
+				getYear() % 100,
+				getOrdinal(),
+				getEffective().atZone(UTC).format(DateTimeFormatter.ISO_LOCAL_DATE),
+				getNext().getEffective().minusSeconds(1).atZone(UTC).format(DateTimeFormatter.ISO_LOCAL_DATE)
 		);
 	}
 
@@ -232,7 +229,7 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 * @return the successor AIRAC cycle to this AIRAC cycle
 	 */
 	@NotNull
-	public Airac next() {
+	public Airac getNext() {
 		return new Airac(serial + 1);
 	}
 
@@ -242,7 +239,7 @@ public class Airac implements Comparable<Airac>, Serializable {
 	 * @return the predecessor AIRAC cycle to this AIRAC cycle
 	 */
 	@NotNull
-	public Airac previous() {
+	public Airac getPrevious() {
 		return new Airac(serial - 1);
 	}
 

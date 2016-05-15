@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~  Copyright (C) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
+  ~ Copyright (c) 2016 Wolfgang Johannes Kohnen <wjkohnen@users.noreply.github.com>
   ~
-  ~   This program is free software: you can redistribute it and/or modify
-  ~   it under the terms of the GNU Lesser General Public License as published by
-  ~   the Free Software Foundation, either version 3 of the License, or
-  ~   (at your option) any later version.
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
   ~
-  ~   This program is distributed in the hope that it will be useful,
-  ~   but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~   GNU Lesser General Public License for more details.
+  ~     http://www.apache.org/licenses/LICENSE-2.0
   ~
-  ~   You should have received a copy of the GNU Lesser General Public License
-  ~   along with this program.  If not, see <http://www.gnu.org/licenses />.
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.ko-sys.av</groupId>
@@ -30,8 +30,8 @@
 
 	<licenses>
 		<license>
-			<name>The GNU Lesser General Public License v3.0</name>
-			<url>https://www.gnu.org/licenses/lgpl-3.0.en.html</url>
+			<name>The Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
 		</license>
 	</licenses>
 
@@ -67,13 +67,36 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.7.6.201602180812</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 	<scm>
 		<connection>scm:git:git@github.com:wjkohnen/airac-java.git</connection>
 		<developerConnection>scm:git:git@github.com:wjkohnen/airac-java.git</developerConnection>
 		<url>git@github.com:wjkohnen/airac-java.git</url>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -138,7 +161,7 @@
 						<configuration>
 							<serverId>ossrh</serverId>
 							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>false</autoReleaseAfterClose>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
 						</configuration>
 					</plugin>
 					<plugin>
